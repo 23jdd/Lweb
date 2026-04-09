@@ -583,6 +583,7 @@ func (e *Engine) hasPath(path string) bool {
 	return false
 }
 func (e *Engine) Run(addr string) error {
+	e.T.Display()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		context := e.pool.Get().(*Context)
 		defer e.pool.Put(context)
