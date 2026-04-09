@@ -4,8 +4,9 @@
 
 - 路由分组（`Group`）
 - 中间件链（`Use` + `Next`）
-- 路由参数（如 `/users/{id}`）
+- 路由参数（如 `/users/{id}/{name}`）
 - 常见响应能力（`String` / `Json` / `XML` / `HTML`）
+- Session（内存版，会话过期 + 定时清理）
 
 
 
@@ -27,7 +28,7 @@ go run .
 - `NoRoute`：未匹配路由的统一兜底处理
 - `NoMethod`：路径存在但方法不匹配时返回 405
 - `GET /api/hello`：查询参数示例
-- `GET /api/users/{id}`：路径参数示例
+- `GET /api/users/{id}/{name}`：路径参数示例
 - `GET /api/static/*filepath`：通配参数示例（捕获剩余路径）
 - `Static("/assets", "./static")`：静态目录映射示例
 - `POST /api/echo`：JSON 绑定与回显示例
@@ -49,13 +50,13 @@ hello cursor
 ### 2) 路径参数
 
 ```bash
-curl "http://localhost:8080/api/users/123"
+curl "http://localhost:8080/api/users/123/tom"
 ```
 
 返回：
 
 ```json
-{"id":"123","name":"demo-user"}
+{"id":"123","name":"tom"}
 ```
 
 ### 3) JSON 请求体
@@ -143,6 +144,39 @@ hello static
 - `c.BindJSON(&obj)`：把请求体 JSON 解析到结构体/Map。
 - `c.String()/c.Json()/c.XML()/c.HTML()`：输出响应。
 - `c.Fail(code, msg)`：返回统一错误并终止后续处理。
+
+## Session（内存版）
+
+已提供 `session.go`，支持：
+
+- 会话创建与读取
+- Cookie 续期与过期控制
+- 每 5 分钟后台清理过期会话
+- `Close()` 停止清理协程（建议在服务退出时调用）
+
+示例：
+
+```go
+sm := NewSessionManager(DefaultSessionOptions())
+defer sm.Close()
+engine.Use(sm.Session())
+
+api.GET("/login", func(c *Context) {
+	s := GetSession(c)
+	s.Set("uid", "1001")
+	c.String(200, "ok")
+})
+
+api.GET("/me", func(c *Context) {
+	s := GetSession(c)
+	uid, ok := s.Get("uid")
+	if !ok {
+		c.Fail(401, "未登录")
+		return
+	}
+	c.Json(200, map[string]any{"uid": uid})
+})
+```
 
 ## 路由参数写法
 

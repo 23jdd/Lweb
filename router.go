@@ -566,17 +566,17 @@ func (c *Context) Fail(code int, msg string) {
 		"message": msg,
 	})
 }
-func (e *Engine) GetChains(path string) ([]Handler, map[string]string) {
-	search, params, err := e.T.Search(Split(path))
+func (e *Engine) GetChains(path string) ([]Handler, map[string]string, bool) {
+	search, params, err, ok := e.T.Search(Split(path))
 	if err != nil {
-		return nil, nil
+		return nil, nil, false
 	}
-	return search, params
+	return search, params, ok
 }
 func (e *Engine) hasPath(path string) bool {
 	for _, method := range routeMethods {
-		search, _, err := e.T.Search(Split(method + path))
-		if err == nil && len(search) > 0 {
+		search, _, err, ok := e.T.Search(Split(method + path))
+		if err == nil && len(search) > 0 && ok {
 			return true
 		}
 	}
@@ -588,8 +588,8 @@ func (e *Engine) Run(addr string) error {
 		context := e.pool.Get().(*Context)
 		defer e.pool.Put(context)
 		url := r.Method + r.URL.Path
-		chains, params := e.GetChains(url)
-		if chains == nil {
+		chains, params, ok := e.GetChains(url)
+		if chains == nil || !ok {
 			if e.hasPath(r.URL.Path) {
 				context.Reset(w, r, []Handler{e.noMethod}, map[string]string{})
 				context.Next()

@@ -6,12 +6,12 @@ import (
 )
 
 type TrieNode struct {
-	Next   []*TrieNode
-	index  map[string]*TrieNode
-	prefix string
-	IsEnd  bool //
-	IsPath bool // {path}
-	IsAll  bool // *arg
+	Next       []*TrieNode
+	index      map[string]*TrieNode
+	prefix     string
+	IsEnd      bool //
+	IsPath     bool // {path}
+	IsAll      bool // *arg
 	IsRoot     bool
 	Path       string
 	Middleware []Handler //
@@ -102,7 +102,7 @@ func (t *Trie) Insert(value []string, handler Handler, Used bool) {
 		}
 	}
 }
-func (t *Trie) Search(value []string) ([]Handler, map[string]string, error) {
+func (t *Trie) Search(value []string) ([]Handler, map[string]string, error, bool) {
 	result := make([]Handler, 0, len(value)+2)
 	params := make(map[string]string)
 	temp := t.root
@@ -128,13 +128,13 @@ func (t *Trie) Search(value []string) ([]Handler, map[string]string, error) {
 					result = append(result, child.Middleware...)
 					if child.IsEnd {
 						result = append(result, child.Solve)
-						return result, params, nil
+						return result, params, nil, true
 					}
-					return nil, nil, fmt.Errorf("invalid wildcard route %s", child.Path)
+					return nil, nil, fmt.Errorf("invalid wildcard route %s", child.Path), false
 				}
 			}
 			if !ok {
-				return nil, nil, fmt.Errorf("not found %s", v)
+				return nil, nil, fmt.Errorf("not found %s", v), false
 			}
 		}
 		if node.IsPath {
@@ -145,18 +145,18 @@ func (t *Trie) Search(value []string) ([]Handler, map[string]string, error) {
 			result = append(result, node.Middleware...)
 			if node.IsEnd {
 				result = append(result, node.Solve)
-				return result, params, nil
+				return result, params, nil, true
 			}
-			return nil, nil, fmt.Errorf("invalid wildcard route %s", node.Path)
+			return nil, nil, fmt.Errorf("invalid wildcard route %s", node.Path), false
 		}
 		result = append(result, node.Middleware...)
 		if node.IsEnd && index == len(value)-1 {
 			result := append(result, node.Solve)
-			return result, params, nil
+			return result, params, nil, true
 		}
 		temp = node
 	}
-	return result, params, nil
+	return result, params, nil, false
 }
 func (t *Trie) Display() {
 	fmt.Println("Trie Tree:")
@@ -204,4 +204,3 @@ func NewRouterTree() *Trie {
 	}
 	return t
 }
-

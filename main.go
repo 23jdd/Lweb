@@ -1,6 +1,6 @@
 package main
 
-
+import "fmt"
 
 func main() {
 	engine := NewEngine()
@@ -16,10 +16,18 @@ func main() {
 	})
 
 	api := engine.Group("/api")
+	api.Use(func(c *Context) {
+		c.Set("hello", "world")
+		c.Next()
 
+	})
 	api.GET("/hello", func(c *Context) {
 		name := c.DefaultQuery("name", "world")
 		c.String(200, "hello "+name)
+		get, ok := c.Get("hello")
+		if ok {
+			fmt.Println(get)
+		}
 	})
 
 	api.GET("/users/{id}/{name}", func(c *Context) {
