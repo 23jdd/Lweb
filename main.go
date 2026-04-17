@@ -57,7 +57,9 @@ func main() {
 	api.GET("/what", func(c *Context) {
 		c.Json(200, map[string]any{})
 	})
+	api.TRACE("/hello", func(c *Context) {
 
+	})
 	if err := engine.Run(":8080"); err != nil {
 		panic(err)
 	}
