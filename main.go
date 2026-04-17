@@ -54,7 +54,9 @@ func main() {
 			"received": body,
 		})
 	})
-	fmt.Println("Server start...")
+	fmt.Printf("Server start...%d\n", 8080)
+	fmt.Println("hello world")
+	fmt.Println("THIS HELLO WORLD")
 	if err := engine.Run(":8080"); err != nil {
 		panic(err)
 	}
