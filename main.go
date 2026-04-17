@@ -55,6 +55,7 @@ func main() {
 		})
 	})
 	fmt.Println("Server start...")
+	fmt.Println("what")
 	if err := engine.Run(":8080"); err != nil {
 		panic(err)
 	}
