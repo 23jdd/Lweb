@@ -582,10 +582,8 @@ func (e *Engine) hasPath(path string) bool {
 	}
 	return false
 }
-func (e *Engine) Run(addr string) error {
-	e.T.Display()
-	fmt.Printf("Server start...%s\n", addr)
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (e *Engine) newHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		context := e.pool.Get().(*Context)
 		defer e.pool.Put(context)
 		url := r.Method + r.URL.Path
@@ -603,9 +601,14 @@ func (e *Engine) Run(addr string) error {
 		context.Reset(w, r, chains, params)
 		context.Next()
 	})
+}
+
+func (e *Engine) startServer(addr string) error {
+	e.T.Display()
+	fmt.Printf("Server start...%s\n", addr)
 	e.server = &http.Server{
 		Addr:              addr,
-		Handler:           handler,
+		Handler:           e.newHandler(),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -619,7 +622,26 @@ func (e *Engine) Run(addr string) error {
 		defer cancel()
 		_ = e.server.Shutdown(shutdownCtx)
 	}()
+	return nil
+}
+
+func (e *Engine) Run(addr string) error {
+	if err := e.startServer(addr); err != nil {
+		return err
+	}
 	err := e.server.ListenAndServe()
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+	return err
+}
+
+func (e *Engine) RunTLS(addr, certFile, keyFile string) error {
+	if err := e.startServer(addr); err != nil {
+		return err
+	}
+	fmt.Printf("TLS enabled, cert=%s key=%s\n", certFile, keyFile)
+	err := e.server.ListenAndServeTLS(certFile, keyFile)
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
