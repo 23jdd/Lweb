@@ -3,6 +3,7 @@ package main
 import "fmt"
 
 func main() {
+	IconPrint("LWEB")
 	engine := NewEngine()
 
 	// 全局中间件：使用内置日志
@@ -55,11 +56,6 @@ func main() {
 		})
 	})
 
-	fmt.Println("Server start...")
-	fmt.Println("what")
-	fmt.Printf("Server start...%d\n", 8080)
-	fmt.Println("hello world")
-	fmt.Println("THIS HELLO WORLD")
 	if err := engine.Run(":8080"); err != nil {
 		panic(err)
 	}
